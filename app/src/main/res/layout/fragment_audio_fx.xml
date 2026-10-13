@@ -123,6 +123,70 @@
             android:valueTo="10" />
 
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/echo_equalizer"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alpha="0.66"
+                        android:text="@string/echo_equalizer_summary"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/eqSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:fillViewport="false"
+                android:paddingHorizontal="16dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/eqPresetGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="4dp"
+                    app:singleSelection="true" />
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:id="@+id/eqBandsHost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/equalizer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -135,7 +199,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/equalizer"
+                android:text="@string/poweramp_equalizer"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="18sp" />
 
@@ -144,7 +208,7 @@
                 android:layout_height="wrap_content"
                 android:alpha="0.66"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:text="@string/equalizer_summary" />
+                android:text="@string/poweramp_equalizer_summary" />
         </LinearLayout>
     </LinearLayout>
 

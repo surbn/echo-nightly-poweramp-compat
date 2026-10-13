@@ -9,18 +9,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
+import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.databinding.DialogPlayerAudioFxBinding
 import dev.brahmkshatriya.echo.databinding.FragmentAudioFxBinding
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.BASS_BOOST
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.CHANGE_PITCH
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.CUSTOM_EFFECTS
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.EQ_BAND_COUNT
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.EQ_BAND_PREFIX
+import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.EQ_ENABLED
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.PLAYBACK_SPEED
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.deleteFxPrefs
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.getFxPrefs
@@ -109,8 +117,109 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
             bassBoostSlider.addOnChangeListener { _, value, _ ->
                 settings.edit { putInt(BASS_BOOST, value.toInt()) }
             }
+            bindEchoEqualizer(settings)
             equalizer.setOnClickListener { onEqualizerClicked() }
         }
+
+        private data class EqPreset(val label: Int, val levels: IntArray)
+
+        private fun FragmentAudioFxBinding.bindEchoEqualizer(settings: SharedPreferences) {
+            val context = root.context
+            val presets = listOf(
+                EqPreset(R.string.eq_preset_flat, intArrayOf(0, 0, 0, 0, 0)),
+                EqPreset(R.string.eq_preset_bass, intArrayOf(6, 5, 2, -1, -2)),
+                EqPreset(R.string.eq_preset_pop, intArrayOf(-1, 3, 5, 2, -1)),
+                EqPreset(R.string.eq_preset_rock, intArrayOf(4, 2, -1, 2, 4)),
+                EqPreset(R.string.eq_preset_jazz, intArrayOf(3, 1, -2, 2, 4)),
+                EqPreset(R.string.eq_preset_vocal, intArrayOf(-2, 2, 4, 3, 0)),
+            )
+            val bandNames = listOf("60 Hz", "250 Hz", "1 kHz", "4 kHz", "14 kHz")
+            var updating = true
+
+            eqSwitch.isChecked = settings.getBoolean(EQ_ENABLED, false)
+            eqPresetGroup.removeAllViews()
+            presets.forEach { preset ->
+                val chip = Chip(context).apply {
+                    text = context.getString(preset.label)
+                    isCheckable = true
+                    id = View.generateViewId()
+                }
+                eqPresetGroup.addView(chip)
+                chip.setOnClickListener {
+                    settings.edit {
+                        putBoolean(EQ_ENABLED, true)
+                        preset.levels.forEachIndexed { index, level ->
+                            putInt("$EQ_BAND_PREFIX$index", level)
+                        }
+                    }
+                    updating = true
+                    eqSwitch.isChecked = true
+                    eqBandsHost.childrenSliders().forEachIndexed { index, slider ->
+                        slider.value = preset.levels[index].toFloat()
+                    }
+                    updating = false
+                }
+            }
+
+            eqBandsHost.removeAllViews()
+            repeat(EQ_BAND_COUNT) { index ->
+                val row = LinearLayout(context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                }
+                val bandLabel = TextView(context).apply {
+                    text = bandNames[index]
+                    textSize = 12f
+                }
+                row.addView(bandLabel, LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)))
+
+                val slider = Slider(context).apply {
+                    valueFrom = -12f
+                    valueTo = 12f
+                    stepSize = 1f
+                    value = settings.getInt("$EQ_BAND_PREFIX$index", 0).coerceIn(-12, 12).toFloat()
+                    contentDescription = bandNames[index]
+                }
+                row.addView(slider, LinearLayout.LayoutParams(0, dp(context, 48), 1f))
+
+                val valueLabel = TextView(context).apply {
+                    text = formatDb(slider.value.toInt())
+                    gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                    textSize = 12f
+                }
+                row.addView(valueLabel, LinearLayout.LayoutParams(dp(context, 48), dp(context, 48)))
+                eqBandsHost.addView(row)
+                slider.addOnChangeListener { _, value, fromUser ->
+                    valueLabel.text = formatDb(value.toInt())
+                    if (fromUser && !updating) {
+                        settings.edit { putInt("$EQ_BAND_PREFIX$index", value.toInt()) }
+                        eqPresetGroup.clearCheck()
+                    }
+                }
+            }
+
+            eqSwitch.setOnCheckedChangeListener { _, enabled ->
+                if (!updating) settings.edit { putBoolean(EQ_ENABLED, enabled) }
+            }
+            updating = false
+        }
+
+        private fun LinearLayout.childrenSliders(): List<Slider> = buildList {
+            for (i in 0 until childCount) {
+                val row = getChildAt(i) as? LinearLayout ?: continue
+                for (j in 0 until row.childCount) {
+                    (row.getChildAt(j) as? Slider)?.let(::add)
+                }
+            }
+        }
+
+        private fun formatDb(value: Int) = when {
+            value > 0 -> "+$value dB"
+            else -> "$value dB"
+        }
+
+        private fun dp(context: android.content.Context, value: Int) =
+            (value * context.resources.displayMetrics.density).toInt()
 
         private fun openEqualizer(activity: ComponentActivity, sessionId: Int) {
             if (sessionId > 0) {

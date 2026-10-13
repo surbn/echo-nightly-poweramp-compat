@@ -18,6 +18,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.copyTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.ln
 
 @OptIn(UnstableApi::class)
 class EffectsListener(
@@ -69,25 +70,51 @@ class EffectsListener(
     class Effects(sessionId: Int) {
         private val equalizer = runCatching { Equalizer(0, sessionId) }.getOrNull()
         private val gain = runCatching { LoudnessEnhancer(sessionId) }.getOrNull()
-        private fun applyBassBoost(strength: Int) = runCatching {
-            if (strength == 0) {
-                equalizer?.setEnabled(false)
-                gain?.setEnabled(false)
-                return@runCatching
+        private fun applyAudioSettings(settings: SharedPreferences) = runCatching {
+            val bass = settings.getInt(BASS_BOOST, 0).coerceIn(0, 10)
+            val eqEnabled = settings.getBoolean(EQ_ENABLED, false)
+            val levels = IntArray(EQ_BAND_COUNT) { index ->
+                settings.getInt("$EQ_BAND_PREFIX$index", 0).coerceIn(-12, 12)
             }
-            gain?.setEnabled(true)
-            equalizer?.setEnabled(true)
+
             equalizer?.apply {
-                val value =
-                    (strength * bandLevelRange.last().toDouble() / 10).roundToInt().toShort()
+                val range = bandLevelRange
+                val bassValue = (bass * range.last().toDouble() / 10).roundToInt()
                 val zero = numberOfBands.toDouble() * 2 / 3
-                for (it in 0 until numberOfBands) {
-                    val v = (-(it - zero).pow(3) * value / zero.pow(3)).roundToInt()
-                    setBandLevel(it.toShort(), v.toShort())
+                for (band in 0 until numberOfBands) {
+                    val centerHz = getCenterFreq(band.toShort()).toDouble() / 1000.0
+                    val eqMilliBel = if (eqEnabled) interpolateEq(centerHz, levels) * 100 else 0.0
+                    val bassMilliBel = if (bass == 0) 0 else
+                        (-(band - zero).pow(3) * bassValue / zero.pow(3)).roundToInt()
+                    val combined = (eqMilliBel + bassMilliBel).roundToInt()
+                        .coerceIn(range.first().toInt(), range.last().toInt())
+                    setBandLevel(band.toShort(), combined.toShort())
+                }
+                setEnabled(eqEnabled || bass > 0)
+            }
+
+            gain?.apply {
+                setEnabled(bass > 0)
+                if (bass > 0) {
+                    setTargetGain((bass.toDouble().pow(1.0 / 3.0) * 1600).roundToInt())
                 }
             }
-            val g = (strength.toDouble().pow(1.toDouble() / 3) * 1600).roundToInt()
-            gain?.setTargetGain(g)
+        }
+
+        private fun interpolateEq(frequencyHz: Double, levels: IntArray): Double {
+            val frequencies = EQ_CENTERS_HZ
+            val x = ln(frequencyHz.coerceAtLeast(1.0))
+            if (x <= ln(frequencies.first())) return levels.first().toDouble()
+            if (x >= ln(frequencies.last())) return levels.last().toDouble()
+            for (index in 0 until frequencies.lastIndex) {
+                val left = ln(frequencies[index])
+                val right = ln(frequencies[index + 1])
+                if (x in left..right) {
+                    val fraction = (x - left) / (right - left)
+                    return levels[index] + (levels[index + 1] - levels[index]) * fraction
+                }
+            }
+            return 0.0
         }
 
         fun release() {
@@ -98,13 +125,17 @@ class EffectsListener(
         }
 
         fun applySettings(settings: SharedPreferences) {
-            applyBassBoost(settings.getInt(BASS_BOOST, 0))
+            applyAudioSettings(settings)
         }
     }
 
     companion object {
         const val GLOBAL_FX = "global_fx"
         const val BASS_BOOST = "bass_boost"
+        const val EQ_ENABLED = "eq_enabled"
+        const val EQ_BAND_PREFIX = "eq_band_"
+        const val EQ_BAND_COUNT = 5
+        val EQ_CENTERS_HZ = doubleArrayOf(60.0, 250.0, 1000.0, 4000.0, 14000.0)
         const val PLAYBACK_SPEED = "playback_speed"
         val speedRange = listOf(
             0.1f, 0.175f, 0.25f, 0.33f, 0.5f, 0.66f, 0.75f, 0.85f, 0.9f, 0.95f,

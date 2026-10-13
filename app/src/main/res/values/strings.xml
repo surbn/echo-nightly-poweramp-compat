@@ -99,8 +99,19 @@
     <string name="bass_boost">Bass Boost</string>
     <string name="bass_boost_desc">Larger value may distort the sound.</string>
     <string name="change_pitch_with_speed_desc">Get that slow-motion sound</string>
+    <string name="echo_equalizer">Echo 5-band Equalizer</string>
+    <string name="echo_equalizer_summary">Adjust five frequency ranges from −12 to +12 dB.</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_bass">Bass</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_vocal">Vocal</string>
     <string name="equalizer">Equalizer</string>
-    <string name="equalizer_summary">Open Poweramp Equalizer for Echo playback</string>
+    <string name="equalizer_summary">Open the device equalizer settings</string>
+    <string name="poweramp_equalizer">Poweramp Equalizer</string>
+    <string name="poweramp_equalizer_summary">Open the separate Poweramp Equalizer app</string>
+    <string name="video_source_label">Video · %1$s</string>
     <string name="external_equalizer_compatibility">External equalizer compatibility</string>
     <string name="external_equalizer_compatibility_summary">Disable audio offload so Poweramp Equalizer can process Echo playback. This may use more battery; turn Echo Bass Boost down to avoid double processing.</string>
 

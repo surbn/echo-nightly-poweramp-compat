@@ -94,8 +94,9 @@ class QualitySelectionBottomSheet : BottomSheetDialogFragment() {
             binding.run {
                 applyChips(
                     list, streamableSource, streamableSourceGroup, index,
-                    { viewModel.changeCurrentSource(list.indexOf(it)) }) {
-                    it.title ?: getString(R.string.quality_x, it.quality)
+                    { viewModel.changeCurrentSource(list.indexOf(it)) }) { source ->
+                    val label = source.title ?: getString(R.string.quality_x, source.quality)
+                    if (source.isVideo) getString(R.string.video_source_label, label) else label
                 }
             }
             val details = tracks?.getDetails(requireContext(), server, index)?.joinToString("\n")
