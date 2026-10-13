@@ -69,10 +69,15 @@ class PlayerService : MediaLibraryService() {
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
         when (key) {
             SKIP_SILENCE -> exoPlayer.skipSilenceEnabled = prefs.getBoolean(key, true)
-            MORE_BRAIN_CAPACITY -> exoPlayer.trackSelectionParameters =
+            MORE_BRAIN_CAPACITY, EXTERNAL_EQUALIZER_COMPATIBILITY -> exoPlayer.trackSelectionParameters =
                 exoPlayer.trackSelectionParameters
                     .buildUpon()
-                    .setAudioOffloadPreferences(offloadPreferences(prefs.getBoolean(key, false)))
+                    .setAudioOffloadPreferences(
+                        offloadPreferences(
+                            prefs.getBoolean(MORE_BRAIN_CAPACITY, false),
+                            prefs.getBoolean(EXTERNAL_EQUALIZER_COMPATIBILITY, true)
+                        )
+                    )
                     .build()
         }
     }
@@ -125,6 +130,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        effects.release()
         mediaSession?.run {
             player.release()
             release()
@@ -138,10 +144,15 @@ class PlayerService : MediaLibraryService() {
     private val mediaChangeFlow = MutableSharedFlow<Pair<MediaItem, MediaItem>>()
 
     @OptIn(UnstableApi::class)
-    private fun offloadPreferences(moreBrainCapacity: Boolean) =
+    private fun offloadPreferences(
+        moreBrainCapacity: Boolean,
+        externalEqualizerCompatibility: Boolean,
+    ) =
         TrackSelectionParameters.AudioOffloadPreferences.Builder()
             .setAudioOffloadMode(
-                if (moreBrainCapacity) AUDIO_OFFLOAD_MODE_DISABLED else AUDIO_OFFLOAD_MODE_ENABLED
+                if (moreBrainCapacity || externalEqualizerCompatibility) {
+                    AUDIO_OFFLOAD_MODE_DISABLED
+                } else AUDIO_OFFLOAD_MODE_ENABLED
             ).setIsGaplessSupportRequired(true)
             .setIsSpeedChangeSupportRequired(true)
             .build()
@@ -154,7 +165,10 @@ class PlayerService : MediaLibraryService() {
             .build()
 
         val audioOffloadPreferences =
-            offloadPreferences(app.settings.getBoolean(MORE_BRAIN_CAPACITY, false))
+            offloadPreferences(
+                app.settings.getBoolean(MORE_BRAIN_CAPACITY, false),
+                app.settings.getBoolean(EXTERNAL_EQUALIZER_COMPATIBILITY, true)
+            )
 
         val factory = StreamableMediaSource.Factory(
             app, scope, state, extensions, cache, downloadFlow, mediaChangeFlow
@@ -185,6 +199,7 @@ class PlayerService : MediaLibraryService() {
 
     companion object {
         const val MORE_BRAIN_CAPACITY = "offload"
+        const val EXTERNAL_EQUALIZER_COMPATIBILITY = "external_equalizer_compatibility"
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
 

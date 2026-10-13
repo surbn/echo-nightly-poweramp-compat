@@ -92,7 +92,7 @@
 
     <string name="audio_fx">Audio Effects</string>
     <string name="audio_fx_summary">Effects applied for all songs</string>
-    <string name="audio_fx_desc">Change the audio effects for the current track.</string>
+    <string name="audio_fx_desc">Change effects for this track. Poweramp Equalizer visualizations and presets run in the Poweramp app.</string>
     <string name="reset">Reset</string>
     <string name="playback_speed">Playback Speed</string>
     <string name="change_pitch_with_speed">Change pitch with speed</string>
@@ -100,7 +100,9 @@
     <string name="bass_boost_desc">Larger value may distort the sound.</string>
     <string name="change_pitch_with_speed_desc">Get that slow-motion sound</string>
     <string name="equalizer">Equalizer</string>
-    <string name="equalizer_summary">Open the device equalizer settings</string>
+    <string name="equalizer_summary">Open Poweramp Equalizer for Echo playback</string>
+    <string name="external_equalizer_compatibility">External equalizer compatibility</string>
+    <string name="external_equalizer_compatibility_summary">Disable audio offload so Poweramp Equalizer can process Echo playback. This may use more battery; turn Echo Bass Boost down to avoid double processing.</string>
 
     <string name="stream_quality">Stream Quality</string>
     <string name="stream_quality_summary">Select the default quality of the stream</string>

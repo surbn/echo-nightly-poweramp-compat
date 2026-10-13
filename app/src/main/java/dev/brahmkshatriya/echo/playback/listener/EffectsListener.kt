@@ -28,7 +28,7 @@ class EffectsListener(
 
     init {
         audioSessionFlow.value = exoPlayer.audioSessionId
-        context.broadcastAudioSession()
+        context.broadcastAudioSession(exoPlayer.audioSessionId)
     }
 
     private val settings: SharedPreferences = context.globalFx()
@@ -58,11 +58,12 @@ class EffectsListener(
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = applyCustomEffects()
     override fun onAudioSessionIdChanged(audioSessionId: Int) {
-        release()
-        context.broadcastAudioSession()
+        effects.release()
+        context.closeBroadcastAudioSession()
         audioSessionFlow.value = audioSessionId
         effects = createEffects()
         effects.applySettings(oldSettings)
+        context.broadcastAudioSession(audioSessionId)
     }
 
     class Effects(sessionId: Int) {
@@ -133,8 +134,8 @@ class EffectsListener(
             deleteSharedPreferences("fx_$id")
     }
 
-    private fun Context.broadcastAudioSession() {
-        val id = exoPlayer.audioSessionId
+    private fun Context.broadcastAudioSession(id: Int) {
+        if (id <= 0) return
         sendBroadcast(Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
             putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
             putExtra(AudioEffect.EXTRA_AUDIO_SESSION, id)
@@ -143,14 +144,19 @@ class EffectsListener(
     }
 
     private fun Context.broadcastAudioSessionClose(id: Int) {
+        if (id <= 0) return
         sendBroadcast(Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION).apply {
             putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
             putExtra(AudioEffect.EXTRA_AUDIO_SESSION, id)
         })
     }
 
-    private fun release() {
+    private fun Context.closeBroadcastAudioSession() {
+        broadcastAudioSessionClose(audioSessionFlow.value)
+    }
+
+    fun release() {
         effects.release()
-        context.broadcastAudioSessionClose(audioSessionFlow.value)
+        context.closeBroadcastAudioSession()
     }
 }

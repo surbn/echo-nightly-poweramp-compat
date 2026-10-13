@@ -4,12 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.media.audiofx.AudioEffect
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -28,7 +28,6 @@ import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.globa
 import dev.brahmkshatriya.echo.playback.listener.EffectsListener.Companion.speedRange
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
-import dev.brahmkshatriya.echo.utils.PermsUtils.registerActivityResultLauncher
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoCleared
 import dev.brahmkshatriya.echo.utils.ui.RulerAdapter
 import kotlinx.coroutines.launch
@@ -114,13 +113,31 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
         }
 
         private fun openEqualizer(activity: ComponentActivity, sessionId: Int) {
-            val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, activity.packageName)
-                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
-                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
+            if (sessionId > 0) {
+                activity.sendBroadcast(Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
+                    putExtra(AudioEffect.EXTRA_PACKAGE_NAME, activity.packageName)
+                    putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
+                    putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
+                })
             }
-            val contract = ActivityResultContracts.StartActivityForResult()
-            activity.registerActivityResultLauncher(contract) {}.launch(intent)
+
+            val equalizerPackage = "com.maxmpz.equalizer"
+            val powerampIntent = activity.packageManager.getLaunchIntentForPackage(equalizerPackage)
+            if (powerampIntent != null) {
+                activity.startActivity(powerampIntent)
+            } else {
+                val storeUri = Uri.parse("market://details?id=$equalizerPackage")
+                try {
+                    activity.startActivity(Intent(Intent.ACTION_VIEW, storeUri))
+                } catch (_: android.content.ActivityNotFoundException) {
+                    activity.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/apps/details?id=$equalizerPackage")
+                        )
+                    )
+                }
+            }
         }
 
         fun Fragment.onEqualizerClicked() {

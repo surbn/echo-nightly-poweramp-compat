@@ -12,6 +12,7 @@ import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CACHE_SIZE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.CLOSE_PLAYER
+import dev.brahmkshatriya.echo.playback.PlayerService.Companion.EXTERNAL_EQUALIZER_COMPATIBILITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.SKIP_SILENCE
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.STREAM_QUALITY
@@ -131,6 +132,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = EXTERNAL_EQUALIZER_COMPATIBILITY
+                    title = getString(R.string.external_equalizer_compatibility)
+                    summary = getString(R.string.external_equalizer_compatibility_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
                     addPreference(this)
                 }
 
