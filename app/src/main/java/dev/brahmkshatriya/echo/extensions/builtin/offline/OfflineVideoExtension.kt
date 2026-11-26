@@ -23,6 +23,7 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.Feed
+import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeed
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeedData
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceUriImageHolder
@@ -149,30 +150,34 @@ class OfflineVideoExtension(
         list
     }
 
-    override suspend fun loadTrack(track: Track): Track {
+    override suspend fun loadTrack(track: Track, isDownload: Boolean): Track {
         return track
     }
 
-    override suspend fun loadStreamableMedia(track: Track, streamable: Streamable): Streamable.Media {
-        val contentUri = ContentUris.withAppendedId(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, track.id.toLongOrNull() ?: 0L
-        )
-        val source = contentUri.toString().toSource(
+    override suspend fun loadStreamableMedia(streamable: Streamable, isDownload: Boolean): Streamable.Media {
+        val source = streamable.id.toSource(
             type = Streamable.SourceType.Progressive,
             isVideo = true
         )
         return source.toMedia()
     }
 
+    override suspend fun loadFeed(track: Track): Feed<Shelf>? = null
+
     override suspend fun loadAlbum(album: Album): Album {
         val videos = queryVideos().filter { it.folder == album.id }
-        val tracks = videos.map { it.toTrack() }
         return album.copy(
-            tracks = tracks,
-            trackCount = tracks.size.toLong(),
-            duration = tracks.sumOf { it.duration ?: 0 }
+            trackCount = videos.size.toLong(),
+            duration = videos.sumOf { it.duration }
         )
     }
+
+    override suspend fun loadTracks(album: Album): Feed<Track>? {
+        val videos = queryVideos().filter { it.folder == album.id }
+        return PagedData.Single { videos.map { it.toTrack() } }.toFeed()
+    }
+
+    override suspend fun loadFeed(album: Album): Feed<Shelf>? = null
 
     override suspend fun loadHomeFeed(): Feed<Shelf> {
         return Feed(
@@ -215,7 +220,7 @@ class OfflineVideoExtension(
                 it.title.contains(query, ignoreCase = true) || it.folder.contains(query, ignoreCase = true)
             }
             val tracks = filtered.map { it.toTrack() }
-            val pagedData = PagedData.Single {
+            val pagedData: PagedData<Shelf> = PagedData.Single {
                 listOf(Shelf.Lists.Tracks("search_videos", "Videos", tracks))
             }
             pagedData.toFeedData(Feed.Buttons())
