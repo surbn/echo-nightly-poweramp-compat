@@ -35,6 +35,8 @@ import dev.brahmkshatriya.echo.common.models.Streamable.Media.Companion.toMedia
 import dev.brahmkshatriya.echo.common.models.Streamable.Source.Companion.toSource
 import dev.brahmkshatriya.echo.common.models.Tab
 import dev.brahmkshatriya.echo.common.models.Track
+import dev.brahmkshatriya.echo.common.settings.Setting
+import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,6 +61,9 @@ class OfflineVideoExtension(
             icon = R.drawable.ic_offline_video.toResourceImageHolder(),
         )
     }
+
+    override suspend fun getSettingItems(): List<Setting> = emptyList()
+    override fun setSettings(settings: Settings) {}
 
     private data class VideoItem(
         val id: Long,
