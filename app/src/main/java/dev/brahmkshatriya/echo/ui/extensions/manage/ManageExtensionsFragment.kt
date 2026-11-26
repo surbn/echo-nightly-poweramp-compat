@@ -107,7 +107,7 @@ class ManageExtensionsFragment : Fragment() {
             }
 
             override fun onOpenClick(extension: Extension<*>) {
-                viewModel.onExtensionSelected(extension as MusicExtension)
+                viewModel.onExtensionSelected(extension as dev.brahmkshatriya.echo.common.MediaExtension)
                 parentFragmentManager.popBackStack()
                 parentFragmentManager.popBackStack()
             }

@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
+import dev.brahmkshatriya.echo.common.MediaExtension
 import dev.brahmkshatriya.echo.common.MusicExtension
 import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.ImportType
@@ -43,10 +44,10 @@ import java.io.File
 class ExtensionsViewModel(
     val extensionLoader: ExtensionLoader,
     val app: App
-) : ExtensionListViewModel<MusicExtension>() {
-    override val extensionsFlow = extensionLoader.music
+) : ExtensionListViewModel<MediaExtension>() {
+    override val extensionsFlow = extensionLoader.media
     override val currentSelectionFlow = extensionLoader.current
-    override fun onExtensionSelected(extension: MusicExtension) {
+    override fun onExtensionSelected(extension: MediaExtension) {
         extensionLoader.setupMusicExtension(extension, true)
     }
 
@@ -60,7 +61,8 @@ class ExtensionsViewModel(
     fun changeExtension(id: String) {
         viewModelScope.launch {
             runCatching {
-                val ext = extensionLoader.music.getExtensionOrThrow(id)
+                val ext = extensionLoader.media.value.find { it.id == id }
+                    ?: extensionLoader.music.getExtensionOrThrow(id)
                 extensionLoader.setupMusicExtension(ext, true)
             }.getOrElse {
                 app.throwFlow.emit(it)

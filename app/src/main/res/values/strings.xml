@@ -462,4 +462,17 @@
     <string name="exported_to">Exported to %1$s</string>
     <string name="import_settings">Import Settings</string>
     <string name="import_settings_summary">Import settings from a file</string>
+
+    <string name="audio_mode">Audio Mode</string>
+    <string name="video_mode">Video Mode</string>
+    <string name="aspect_ratio">Aspect Ratio</string>
+    <string name="playback_speed">Playback Speed</string>
+    <string name="picture_in_picture">Picture in Picture</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="playing_as_audio">Playing as Audio (Video disabled)</string>
+    <string name="playing_as_video">Playing as Video</string>
+    <string name="aspect_fit">Fit (Standard)</string>
+    <string name="aspect_zoom">Zoom (Crop)</string>
+    <string name="aspect_fill">Stretch (Fill)</string>
+    <string name="video_permission_summary">Needed to scan and play local video files.</string>
 </resources>

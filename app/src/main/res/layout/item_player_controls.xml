@@ -242,6 +242,72 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <LinearLayout
+        android:id="@+id/videoControlsRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnVideoAudioToggle"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="0dp"
+            android:text="@string/audio_mode"
+            android:textSize="12sp"
+            app:icon="@drawable/ic_music_mode"
+            app:iconSize="18dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAspectRatio"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/aspect_ratio"
+            app:icon="@drawable/ic_aspect_ratio"
+            app:iconSize="20dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPlaybackSpeed"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/playback_speed"
+            app:icon="@drawable/ic_speed"
+            app:iconSize="20dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPip"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="@string/picture_in_picture"
+            app:icon="@drawable/ic_picture_in_picture"
+            app:iconSize="20dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFullscreen"
+            style="?attr/materialIconButtonStyle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/fullscreen"
+            app:icon="@drawable/ic_fullscreen"
+            app:iconSize="20dp" />
+
+    </LinearLayout>
+
     <TextView
         android:id="@+id/trackSubtitle"
         android:layout_width="match_parent"

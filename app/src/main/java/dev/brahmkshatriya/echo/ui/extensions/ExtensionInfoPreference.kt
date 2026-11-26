@@ -88,6 +88,7 @@ class ExtensionInfoPreference(
     companion object {
         fun getType(type: ExtensionType) = when (type) {
             ExtensionType.MUSIC -> R.string.music
+            ExtensionType.VIDEO -> R.string.video
             ExtensionType.TRACKER -> R.string.tracker
             ExtensionType.LYRICS -> R.string.lyrics
             ExtensionType.MISC -> R.string.misc

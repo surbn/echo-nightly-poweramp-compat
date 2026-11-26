@@ -34,16 +34,16 @@ object PermsUtils {
                 getString(R.string.audio),
                 getString(R.string.audio_permission_summary)
             ),
-//            Triple(
-//                Manifest.permission.READ_MEDIA_VIDEO,
-//                getString(R.string.video),
-//                getString(R.string.video_permission_summary)
-//            ),
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) Triple(
-//                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
-//                getString(R.string.video),
-//                getString(R.string.video_permission_summary)
-//            ) else null
+            Triple(
+                Manifest.permission.READ_MEDIA_VIDEO,
+                getString(R.string.video),
+                getString(R.string.video_permission_summary)
+            ),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) Triple(
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                getString(R.string.video),
+                getString(R.string.video_permission_summary)
+            ) else null
         ) else listOfNotNull(
             Triple(
                 Manifest.permission.READ_EXTERNAL_STORAGE,

@@ -1,21 +1,26 @@
 package dev.brahmkshatriya.echo.ui.player
 
+import android.app.PictureInPictureParams
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.util.Rational
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
@@ -36,6 +41,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
 import androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
 import androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
 import androidx.media3.ui.CaptionStyleCompat
@@ -43,10 +49,12 @@ import androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_OUTLINE
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Streamable
+import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.databinding.FragmentPlayerBinding
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.background
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
@@ -481,6 +489,74 @@ class PlayerFragment : Fragment() {
                 trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
                     ?.joinToString(" ⦿ ")?.takeIf { it.isNotBlank() }
             }
+
+            btnVideoAudioToggle.setOnClickListener {
+                isAudioModeOnly = !isAudioModeOnly
+                applyPlayer()
+                val msg = if (isAudioModeOnly) getString(R.string.playing_as_audio) else getString(R.string.playing_as_video)
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            }
+
+            btnAspectRatio.setOnClickListener {
+                currentResizeMode = when (currentResizeMode) {
+                    RESIZE_MODE_FIT -> RESIZE_MODE_ZOOM
+                    RESIZE_MODE_ZOOM -> RESIZE_MODE_FILL
+                    else -> RESIZE_MODE_FIT
+                }
+                binding.playerView.resizeMode = currentResizeMode
+                val label = when (currentResizeMode) {
+                    RESIZE_MODE_ZOOM -> getString(R.string.aspect_zoom)
+                    RESIZE_MODE_FILL -> getString(R.string.aspect_fill)
+                    else -> getString(R.string.aspect_fit)
+                }
+                Toast.makeText(requireContext(), label, Toast.LENGTH_SHORT).show()
+            }
+
+            btnPlaybackSpeed.setOnClickListener {
+                val speeds = arrayOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
+                val speedStrings = speeds.map { "${it}x" }.toTypedArray()
+                val currentSpeed = viewModel.browser.value?.playbackParameters?.speed ?: 1.0f
+                val checkedItem = speeds.indexOfFirst { kotlin.math.abs(it - currentSpeed) < 0.05f }.takeIf { it != -1 } ?: 2
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.playback_speed)
+                    .setSingleChoiceItems(speedStrings, checkedItem) { dialog, which ->
+                        val chosen = speeds[which]
+                        viewModel.browser.value?.setPlaybackSpeed(chosen)
+                        btnPlaybackSpeed.text = "${chosen}x"
+                        dialog.dismiss()
+                    }
+                    .show()
+            }
+
+            btnPip.setOnClickListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val pv = binding.playerView
+                    val w = pv.width.takeIf { it > 0 } ?: 16
+                    val h = pv.height.takeIf { it > 0 } ?: 9
+                    val rational = Rational(w, h)
+                    val clamped = try {
+                        if (rational.toFloat() in 0.42f..2.38f) rational else Rational(16, 9)
+                    } catch (e: Exception) { Rational(16, 9) }
+                    val params = PictureInPictureParams.Builder()
+                        .setAspectRatio(clamped)
+                        .build()
+                    requireActivity().enterPictureInPictureMode(params)
+                } else {
+                    Toast.makeText(requireContext(), "PiP requires Android 8.0+", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            btnFullscreen.setOnClickListener {
+                val act = requireActivity()
+                if (act.isLandscape()) {
+                    act.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+                    btnFullscreen.setIconResource(R.drawable.ic_fullscreen)
+                } else {
+                    act.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    uiViewModel.changeBgVisible(true)
+                    btnFullscreen.setIconResource(R.drawable.ic_fullscreen_exit)
+                }
+            }
         }
     }
 
@@ -609,14 +685,25 @@ class PlayerFragment : Fragment() {
         ).show(requireActivity().supportFragmentManager, null)
     }
 
-    private fun Player?.hasVideo() =
-        this?.currentTracks?.groups.orEmpty().any { it.type == C.TRACK_TYPE_VIDEO }
+    private var isAudioModeOnly = false
+    private var currentResizeMode = RESIZE_MODE_FIT
+
+    private fun Player?.hasVideo(): Boolean {
+        val tracksHasVideo = this?.currentTracks?.groups.orEmpty().any { it.type == C.TRACK_TYPE_VIDEO }
+        val currentTrack = viewModel.playerState.current.value?.mediaItem?.track
+        val isTrackVideo = currentTrack?.type == Track.Type.Video ||
+                currentTrack?.type == Track.Type.HorizontalVideo ||
+                currentTrack?.extras?.get("is_video") == "true"
+        return tracksHasVideo || isTrackVideo
+    }
 
     private fun applyVideoVisibility(visible: Boolean) {
-        binding?.playerView?.isVisible = visible
-        binding?.bgImage?.isVisible = !visible
+        val binding = binding ?: return
+        binding.playerView.isVisible = visible
+        binding.bgImage.isVisible = !visible
+        binding.bgGradient.isVisible = !visible
         if (requireContext().isLandscape()) return
-        binding?.playerControls?.trackCoverPlaceHolder?.isVisible = visible
+        binding.playerControls.trackCoverPlaceHolder.isVisible = visible
         adapter.updatePlayerVisibility(visible)
     }
 
@@ -627,13 +714,26 @@ class PlayerFragment : Fragment() {
     private fun applyPlayer() {
         val mainPlayer = viewModel.browser.value
         val background = viewModel.playerState.current.value?.mediaItem?.background
-        val visible = if (mainPlayer.hasVideo()) {
+        val hasVideo = mainPlayer.hasVideo()
+
+        binding?.playerControls?.videoControlsRow?.isVisible = hasVideo
+
+        if (isAudioModeOnly) {
+            binding?.playerControls?.btnVideoAudioToggle?.text = getString(R.string.video_mode)
+            binding?.playerControls?.btnVideoAudioToggle?.setIconResource(R.drawable.ic_videocam)
+        } else {
+            binding?.playerControls?.btnVideoAudioToggle?.text = getString(R.string.audio_mode)
+            binding?.playerControls?.btnVideoAudioToggle?.setIconResource(R.drawable.ic_music_mode)
+        }
+
+        val showVideo = hasVideo && !isAudioModeOnly
+        val visible = if (showVideo) {
             binding?.playerView?.player = mainPlayer
-            binding?.playerView?.resizeMode = RESIZE_MODE_FIT
+            binding?.playerView?.resizeMode = currentResizeMode
             backgroundPlayer?.release()
             backgroundPlayer = null
             true
-        } else if (background != null) {
+        } else if (background != null && !isAudioModeOnly) {
             if (oldBg != background || backgroundPlayer == null) {
                 oldBg = background
                 backgroundPlayer?.release()

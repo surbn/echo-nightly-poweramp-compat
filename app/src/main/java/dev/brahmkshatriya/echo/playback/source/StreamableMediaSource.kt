@@ -164,7 +164,7 @@ class StreamableMediaSource(
         private val changeFlow: MutableSharedFlow<Pair<MediaItem, MediaItem>>,
     ) : MediaSource.Factory {
 
-        private val loader = StreamableLoader(app, extensions.music, downloadFlow)
+        private val loader = StreamableLoader(app, extensions.media, downloadFlow)
 
         val dataSourceFactory = StreamableDataSource.Factory(app.context)
         val streamableResolver = StreamableResolver(app.context, state.servers)

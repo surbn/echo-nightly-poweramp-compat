@@ -12,5 +12,6 @@ enum class ExtensionType(val feature: String) {
     MUSIC("music"),
     TRACKER("tracker"),
     LYRICS("lyrics"),
+    VIDEO("video"),
     MISC("misc");
 }

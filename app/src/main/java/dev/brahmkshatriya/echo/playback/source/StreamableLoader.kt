@@ -3,7 +3,7 @@ package dev.brahmkshatriya.echo.playback.source
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import dev.brahmkshatriya.echo.common.Extension
-import dev.brahmkshatriya.echo.common.MusicExtension
+import dev.brahmkshatriya.echo.common.MediaExtension
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.Streamable.Source.Companion.toSource
 import dev.brahmkshatriya.echo.common.models.Track
@@ -32,7 +32,7 @@ import java.io.File
 
 class StreamableLoader(
     private val app: App,
-    private val extensionListFlow: StateFlow<List<MusicExtension>>,
+    private val extensionListFlow: StateFlow<List<MediaExtension>>,
     private val downloadFlow: StateFlow<List<Downloader.Info>>
 ) {
     suspend fun load(mediaItem: MediaItem) = withContext(Dispatchers.IO) {

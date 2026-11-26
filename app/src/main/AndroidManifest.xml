@@ -11,8 +11,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <!--    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />-->
-    <!--    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />-->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -83,6 +83,8 @@
             android:enabled="true"
             android:exported="true"
             android:launchMode="singleTop"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden|keyboard"
             android:windowSoftInputMode="stateVisible|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -110,6 +112,8 @@
             android:enabled="false"
             android:exported="true"
             android:launchMode="singleTop"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden|keyboard"
             android:windowSoftInputMode="stateVisible|adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

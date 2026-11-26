@@ -173,7 +173,7 @@ class PlayerCallback(
         val extId = args.getString("extId") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val itemLoaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
+        val extension = extensions.media.getExtension(extId) ?: return@future error
         val newItem = if (itemLoaded) item else loadItem(extension, item)
         radioFlow.value = PlayerState.Radio.Loading
         val loaded = PlayerRadio.start(
@@ -233,7 +233,7 @@ class PlayerCallback(
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
         val shuffle = args.getBoolean("shuffle", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
+        val extension = extensions.media.getExtension(extId) ?: return@future error
         when (item) {
             is Track -> {
                 val mediaItem = MediaItemUtils.build(
@@ -311,7 +311,7 @@ class PlayerCallback(
         val extId = args.getString("extId") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
+        val extension = extensions.media.getExtension(extId) ?: return@future error
         val tracks = listTracks(extension, item, loaded).getOrElse {
             throwableFlow.emit(it)
             return@future error
@@ -342,7 +342,7 @@ class PlayerCallback(
         val extId = args.getString("extId") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
+        val extension = extensions.media.getExtension(extId) ?: return@future error
         nextJob?.cancel()
         val tracks = listTracks(extension, item, loaded).getOrElse {
             throwableFlow.emit(it)
@@ -382,7 +382,7 @@ class PlayerCallback(
                 ?: return@future SessionResult(SessionError.ERROR_UNKNOWN)
             val track = item.track
             runCatching {
-                val extension = extensions.music.getExtensionOrThrow(item.extensionId)
+                val extension = extensions.media.getExtensionOrThrow(item.extensionId)
                 extension.getAs<LikeClient, Unit> {
                     likeItem(track, rating.isThumbsUp)
                 }

@@ -55,7 +55,8 @@ data class FeedData(
     val current = extensionLoader.current
     val usersFlow = extensionLoader.db.currentUsersFlow
     suspend fun getExtension(id: String) =
-        extensionLoader.getFlow(ExtensionType.MUSIC).getExtensionOrThrow(id)
+        extensionLoader.media.value.find { it.id == id }
+            ?: extensionLoader.getFlow(ExtensionType.MUSIC).getExtensionOrThrow(id)
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()

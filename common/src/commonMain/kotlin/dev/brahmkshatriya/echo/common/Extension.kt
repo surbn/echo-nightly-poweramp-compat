@@ -141,10 +141,15 @@ sealed class Extension<T : ExtensionClient>(
  * @param metadata The metadata of the extension
  * @param instance An injectable instance of the [ExtensionClient] client
  */
-data class MusicExtension(
+open class MediaExtension(
     override val metadata: Metadata,
     override val instance: Injectable<ExtensionClient>
 ) : Extension<ExtensionClient>(metadata, instance)
+
+data class MusicExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<ExtensionClient>
+) : MediaExtension(metadata, instance)
 
 /**
  * A data class representing a Tracker Extension.
@@ -222,3 +227,16 @@ data class MiscExtension(
     override val metadata: Metadata,
     override val instance: Injectable<ExtensionClient>
 ) : Extension<ExtensionClient>(metadata, instance)
+
+/**
+ * A data class representing a Video Extension.
+ *
+ * Video Extension supports video streaming, feeds, searching, and playback.
+ *
+ * @param metadata The metadata of the extension
+ * @param instance An injectable instance of the [ExtensionClient] client
+ */
+data class VideoExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<ExtensionClient>
+) : MediaExtension(metadata, instance)

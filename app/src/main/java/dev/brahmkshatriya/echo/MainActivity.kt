@@ -67,6 +67,16 @@ open class MainActivity : AppCompatActivity() {
         setupIntents(uiViewModel)
     }
 
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        androidx.core.view.ViewCompat.getRootWindowInsets(binding.root)
+        binding.navView.visibility = if (isInPictureInPictureMode) android.view.View.GONE else android.view.View.VISIBLE
+        binding.navHostFragment.visibility = if (isInPictureInPictureMode) android.view.View.GONE else android.view.View.VISIBLE
+    }
+
     companion object {
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"

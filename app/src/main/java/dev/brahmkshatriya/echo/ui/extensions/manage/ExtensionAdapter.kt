@@ -69,7 +69,7 @@ ExtensionAdapter(
                 true
             }
 
-            binding.extensionUse.isVisible = extension.type == ExtensionType.MUSIC
+            binding.extensionUse.isVisible = extension.type == ExtensionType.MUSIC || extension.type == ExtensionType.VIDEO
             binding.extensionUse.setOnClickListener {
                 listener.onOpenClick(extension)
             }

@@ -48,7 +48,7 @@ class HeaderAdapter(
         return holder
     }
 
-    private var extension: MusicExtension? = null
+    private var extension: dev.brahmkshatriya.echo.common.MediaExtension? = null
         set(value) {
             field = value
             notifyItemChanged(0)
@@ -67,7 +67,7 @@ class HeaderAdapter(
         title.text = extension?.name ?: context.getString(R.string.app_name)
         extensions.loadBigIcon(extension?.metadata?.icon, R.drawable.ic_extension_32dp)
         extensionsCont.setLoopedLongClick(
-            viewModel.extensionLoader.music.value.filter { it.isEnabled },
+            viewModel.extensionLoader.media.value.filter { it.isEnabled },
             { viewModel.extensionLoader.current.value }
         ) {
             viewModel.extensionLoader.setupMusicExtension(it, true)

@@ -6,9 +6,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.SimpleCache
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.LyricsExtension
+import dev.brahmkshatriya.echo.common.MediaExtension
 import dev.brahmkshatriya.echo.common.MiscExtension
 import dev.brahmkshatriya.echo.common.MusicExtension
 import dev.brahmkshatriya.echo.common.TrackerExtension
+import dev.brahmkshatriya.echo.common.VideoExtension
 import dev.brahmkshatriya.echo.common.clients.ExtensionClient
 import dev.brahmkshatriya.echo.common.clients.LoginClient
 import dev.brahmkshatriya.echo.common.helpers.Injectable
@@ -23,12 +25,14 @@ import dev.brahmkshatriya.echo.common.providers.MiscExtensionsProvider
 import dev.brahmkshatriya.echo.common.providers.MusicExtensionsProvider
 import dev.brahmkshatriya.echo.common.providers.NetworkConnectionProvider
 import dev.brahmkshatriya.echo.common.providers.TrackerExtensionsProvider
+import dev.brahmkshatriya.echo.common.providers.VideoExtensionsProvider
 import dev.brahmkshatriya.echo.common.providers.WebViewClientProvider
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.get
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.inject
 import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineExtension
+import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineVideoExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.db.ExtensionDatabase
 import dev.brahmkshatriya.echo.extensions.db.models.CurrentUser
@@ -78,6 +82,7 @@ class ExtensionLoader(
         scope, app.context, fileIgnoreFlow, parser,
         UnifiedExtension.metadata to unified,
         OfflineExtension.metadata to lazy { OfflineExtension(app.context) },
+        OfflineVideoExtension.metadata to lazy { OfflineVideoExtension(app.context) },
 //        TestExtension.metadata to lazy { TestExtension() },
 //        DownloadExtension.metadata to lazy { DownloadExtension(app.context) }
 //        TrackerTestExtension.metadata to Injectable { TrackerTestExtension() },
@@ -90,17 +95,17 @@ class ExtensionLoader(
         MutableStateFlow(list)
     }
 
-    val current = MutableStateFlow<MusicExtension?>(null)
+    val current = MutableStateFlow<MediaExtension?>(null)
     private fun setCurrentExtension() {
         val last = settings.getString(LAST_EXTENSION_KEY, null)
-        val list = music.value
+        val list = media.value.ifEmpty { music.value }
         val extension = list.find { it.id == last && it.isEnabled }
             ?: list.firstOrNull { it.isEnabled }
             ?: return
         setupMusicExtension(extension, false)
     }
 
-    fun setupMusicExtension(extension: MusicExtension, manual: Boolean) {
+    fun setupMusicExtension(extension: MediaExtension, manual: Boolean) {
         if (manual) settings.edit { putString(LAST_EXTENSION_KEY, extension.id) }
         current.value = extension
         scope.launch {
@@ -147,7 +152,7 @@ class ExtensionLoader(
 
     val webViewClientFactory = WebViewClientFactory(app.context)
     private fun createWebClient(metadata: Metadata): WebViewClient {
-        if (metadata.type != ExtensionType.MUSIC)
+        if (metadata.type != ExtensionType.MUSIC && metadata.type != ExtensionType.VIDEO)
             throw Exception("Webview client is not available for ${metadata.type} Extensions")
         return webViewClientFactory.createFor(metadata)
     }
@@ -178,11 +183,15 @@ class ExtensionLoader(
     }.stateIn(scope, SharingStarted.Lazily, emptyList())
 
     val music = mapped(ExtensionType.MUSIC) { m, i -> MusicExtension(m, i) }
+    val video = mapped(ExtensionType.VIDEO) { m, i -> VideoExtension(m, i) }
     val tracker = mapped(ExtensionType.TRACKER) { m, i -> TrackerExtension(m, i.casted()) }
     val lyrics = mapped(ExtensionType.LYRICS) { m, i -> LyricsExtension(m, i.casted()) }
     val misc = mapped(ExtensionType.MISC) { m, i -> MiscExtension(m, i) }
-    val all = combine(music, tracker, lyrics, misc) { music, tracker, lyrics, misc ->
-        music + tracker + lyrics + misc
+    val media: StateFlow<List<MediaExtension>> = combine(music, video) { m, v ->
+        m + v
+    }.stateIn(scope, SharingStarted.Lazily, emptyList())
+    val all = combine(music, tracker, lyrics, video, misc) { music, tracker, lyrics, video, misc ->
+        music + tracker + lyrics + video + misc
     }.stateIn(scope, SharingStarted.Lazily, emptyList())
 
     init {
@@ -195,7 +204,7 @@ class ExtensionLoader(
             }
         }
         scope.launch {
-            music.collectLatest { setCurrentExtension() }
+            media.collectLatest { setCurrentExtension() }
         }
         scope.launch {
             app.networkFlow.combine(all) { a, b -> a to b }.collect { (conn, all) ->
@@ -219,12 +228,16 @@ class ExtensionLoader(
         ExtensionType.MUSIC -> music
         ExtensionType.TRACKER -> tracker
         ExtensionType.LYRICS -> lyrics
+        ExtensionType.VIDEO -> video
         ExtensionType.MISC -> misc
     }
 
     private fun injectProviders(client: ExtensionClient) {
         (client as? MusicExtensionsProvider)?.run {
             inject(requiredMusicExtensions, music.value) { setMusicExtensions(it) }
+        }
+        (client as? VideoExtensionsProvider)?.run {
+            inject(requiredVideoExtensions, video.value) { setVideoExtensions(it) }
         }
         (client as? TrackerExtensionsProvider)?.run {
             inject(requiredTrackerExtensions, tracker.value) { setTrackerExtensions(it) }
@@ -233,6 +246,9 @@ class ExtensionLoader(
             inject(requiredLyricsExtensions, lyrics.value) { setLyricsExtensions(it) }
         }
         (client as? MiscExtensionsProvider)?.run {
+            inject(requiredMiscExtensions, misc.value) { setMiscExtensions(it) }
+        }
+    }
             inject(requiredMiscExtensions, misc.value) { setMiscExtensions(it) }
         }
     }
