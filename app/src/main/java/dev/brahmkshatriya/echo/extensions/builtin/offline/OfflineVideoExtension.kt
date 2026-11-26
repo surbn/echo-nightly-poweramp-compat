@@ -23,6 +23,7 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.Feed
+import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeedData
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceUriImageHolder
 import dev.brahmkshatriya.echo.common.models.ImportType
@@ -173,48 +174,39 @@ class OfflineVideoExtension(
         )
     }
 
-    override suspend fun loadHomeFeed(): Feed {
+    override suspend fun loadHomeFeed(): Feed<Shelf> {
         return Feed(
             listOf(Tab("All Videos", "All Videos"), Tab("Folders", "Folders"))
         ) { tab ->
             val videos = queryVideos()
-            when (tab?.id) {
+            val pagedData: PagedData<Shelf> = when (tab?.id) {
                 "Folders" -> {
                     val folders = videos.groupBy { it.folder }
                     val shelves = folders.map { (folderName, items) ->
-                        val album = Album(
+                        Shelf.Lists.Items(
                             id = folderName,
                             title = folderName,
-                            cover = ContentUris.withAppendedId(
-                                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, items.first().id
-                            ).toString().toResourceUriImageHolder(),
-                            trackCount = items.size.toLong(),
-                            duration = items.sumOf { it.duration },
-                            extras = mapOf(EXTENSION_ID to metadata.id)
-                        )
-                        Shelf.Lists.Items(
-                            folderName,
-                            PagedData.Single { items.map { EchoMediaItem.TrackItem(it.toTrack()) } },
-                            EchoMediaItem.Lists.AlbumItem(album)
+                            list = items.map { it.toTrack() }
                         )
                     }
                     PagedData.Single { shelves }
                 }
                 else -> {
-                    val tracks = videos.map { EchoMediaItem.TrackItem(it.toTrack()) }
+                    val tracks = videos.map { it.toTrack() }
                     PagedData.Single {
-                        listOf(Shelf.Lists.Tracks("All Videos", PagedData.Single { tracks }))
+                        listOf(Shelf.Lists.Tracks("all_videos", "All Videos", tracks))
                     }
                 }
             }
+            pagedData.toFeedData(Feed.Buttons())
         }
     }
 
-    override suspend fun loadLibraryFeed(): Feed {
+    override suspend fun loadLibraryFeed(): Feed<Shelf> {
         return loadHomeFeed()
     }
 
-    override suspend fun loadSearchFeed(query: String): Feed {
+    override suspend fun loadSearchFeed(query: String): Feed<Shelf> {
         return Feed(
             listOf(Tab("Videos", "Videos"))
         ) {
@@ -222,10 +214,11 @@ class OfflineVideoExtension(
             val filtered = if (query.isBlank()) videos else videos.filter {
                 it.title.contains(query, ignoreCase = true) || it.folder.contains(query, ignoreCase = true)
             }
-            val tracks = filtered.map { EchoMediaItem.TrackItem(it.toTrack()) }
-            PagedData.Single {
-                listOf(Shelf.Lists.Tracks("Videos", PagedData.Single { tracks }))
+            val tracks = filtered.map { it.toTrack() }
+            val pagedData = PagedData.Single {
+                listOf(Shelf.Lists.Tracks("search_videos", "Videos", tracks))
             }
+            pagedData.toFeedData(Feed.Buttons())
         }
     }
 }

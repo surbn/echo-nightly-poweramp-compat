@@ -43,7 +43,7 @@ class PlayerEventListener(
     private fun updateCustomLayout() = scope.launch(Dispatchers.Main) {
         val item = player.currentMediaItem ?: return@launch
         val supportsLike = withContext(Dispatchers.IO) {
-            extensions.media.getExtension(item.extensionId)?.isClient<LikeClient>() ?: false
+            extensions.media.getExtension<MediaExtension>(item.extensionId)?.isClient<LikeClient>() ?: false
         }
         val commandButtons = listOfNotNull(
             getRepeatButton(context, player.repeatMode),

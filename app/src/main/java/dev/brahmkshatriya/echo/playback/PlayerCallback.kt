@@ -178,8 +178,7 @@ class PlayerCallback(
         radioFlow.value = PlayerState.Radio.Loading
         val loaded = PlayerRadio.start(
             throwableFlow, extension, newItem, null
-        )
-        if (loaded == null) return@future error
+        ) ?: return@future error
         player.with {
             clearMediaItems()
             shuffleModeEnabled = false
@@ -382,7 +381,7 @@ class PlayerCallback(
                 ?: return@future SessionResult(SessionError.ERROR_UNKNOWN)
             val track = item.track
             runCatching {
-                val extension = extensions.media.getExtensionOrThrow(item.extensionId)
+                val extension = extensions.media.getExtensionOrThrow<MediaExtension>(item.extensionId)
                 extension.getAs<LikeClient, Unit> {
                     likeItem(track, rating.isThumbsUp)
                 }

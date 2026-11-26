@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -246,9 +247,6 @@ class ExtensionLoader(
             inject(requiredLyricsExtensions, lyrics.value) { setLyricsExtensions(it) }
         }
         (client as? MiscExtensionsProvider)?.run {
-            inject(requiredMiscExtensions, misc.value) { setMiscExtensions(it) }
-        }
-    }
             inject(requiredMiscExtensions, misc.value) { setMiscExtensions(it) }
         }
     }

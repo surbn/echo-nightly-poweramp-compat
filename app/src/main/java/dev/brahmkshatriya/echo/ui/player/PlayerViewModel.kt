@@ -146,7 +146,7 @@ class PlayerViewModel(
     }
 
     suspend fun isLikeClient(extensionId: String): Boolean = withContext(Dispatchers.IO) {
-        extensions.media.getExtension(extensionId)?.isClient<LikeClient>() ?: false
+        extensions.media.getExtension<MediaExtension>(extensionId)?.isClient<LikeClient>() ?: false
     }
 
     private fun createException(throwable: Throwable) {
