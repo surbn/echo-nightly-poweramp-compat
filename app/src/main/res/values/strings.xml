@@ -466,7 +466,6 @@
     <string name="audio_mode">Audio Mode</string>
     <string name="video_mode">Video Mode</string>
     <string name="aspect_ratio">Aspect Ratio</string>
-    <string name="playback_speed">Playback Speed</string>
     <string name="picture_in_picture">Picture in Picture</string>
     <string name="fullscreen">Fullscreen</string>
     <string name="playing_as_audio">Playing as Audio (Video disabled)</string>
